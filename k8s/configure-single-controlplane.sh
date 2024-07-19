@@ -28,8 +28,8 @@ mkdir ~/.kube
 sudo cp /etc/kubernetes/admin.conf ~/.kube/config
 sudo chown $(id -u):$(id -g) ~/.kube/config
 chmod 600 ~/.kube/config
-sudo kubeadm token create --print-join-command | sudo tee /tmp/join-command.sh > /dev/null
-sudo chmod +x /tmp/join-command.sh
+sudo kubeadm token create --print-join-command | sudo tee /tmp/join-command-worker.sh > /dev/null
+sudo chmod +x /tmp/join-command-worker.sh
 
 echo "Installing Calico for pod networking..."
 
