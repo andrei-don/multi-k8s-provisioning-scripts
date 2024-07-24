@@ -21,7 +21,7 @@ metadata:
 spec:
   request: $ENC_CSR
   signerName: kubernetes.io/kube-apiserver-client
-  expirationSeconds: 86400  # one day
+  expirationSeconds: 2592000  # thirty days
   usages:
   - client auth
 EOF
