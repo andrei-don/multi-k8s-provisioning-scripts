@@ -1,0 +1,15 @@
+# kubeadm-config.yaml
+{{ ansible_managed }}
+kind: ClusterConfiguration
+apiVersion: kubeadm.k8s.io/v1beta3
+kubernetesVersion: v1.30.2
+networking:
+  serviceSubnet: "10.96.0.0/16"
+  podSubnet: {{ pod_subnet }}
+  dnsDomain: "cluster.local"
+controlPlaneEndpoint: "{{ ip }}:6443"
+---
+kind: KubeletConfiguration
+apiVersion: kubelet.config.k8s.io/v1beta1
+cgroupDriver: systemd
+serverTLSBootstrap: true

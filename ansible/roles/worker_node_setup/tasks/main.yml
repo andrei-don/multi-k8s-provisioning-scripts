@@ -1,0 +1,17 @@
+---
+# tasks file for worker_node_setup
+- name: Copy join script from Ansible controller
+  copy:
+    src: /tmp/join_command.sh
+    dest: /tmp/join_command.sh
+    mode: 0755
+
+- name: Execute the join script
+  shell: /tmp/join_command.sh
+
+- name: Approving CSR twice
+  shell: "kubectl get csr --no-headers | awk '{print $1}' | xargs -I {} kubectl certificate approve {}"
+  register: result
+  until: result is succeeded
+  retries: 2
+  delay: 0

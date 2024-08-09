@@ -1,0 +1,72 @@
+---
+# tasks file for single_control_plane_setup
+- name: Check if kubeadm init was run
+  ansible.builtin.stat:
+    path: /etc/kubeadm-config.yaml
+  register: kubeadm_stat
+
+- name: Generate kubeadm config from template
+  ansible.builtin.template:
+    src: kubeadm-config.j2
+    dest: /etc/kubeadm-config.yaml
+  vars:
+    ip: "{{ ansible_default_ipv4.address }}"
+
+- name: Initialize the Kubernetes cluster using kubeadm
+  ansible.builtin.command:
+    cmd: kubeadm init --config /etc/kubeadm-config.yaml
+  when: not kubeadm_stat.stat.exists
+
+- name: Ensure .kube directory exists for root
+  file:
+    path: "/root/.kube"
+    state: directory
+
+- name: copy kubeconfig to root home directory
+  copy:
+    src: /etc/kubernetes/admin.conf
+    dest: /root/.kube/config
+    remote_src: true
+    mode: '0600'
+
+- name: Ensure .kube directory exists for ubuntu
+  file:
+    path: "/home/ubuntu/.kube"
+    state: directory
+    owner: ubuntu
+    group: ubuntu
+
+- name: copy kubeconfig to ubuntu home directory
+  copy:
+    src: /etc/kubernetes/admin.conf
+    dest: /home/ubuntu/.kube/config
+    remote_src: true
+    owner: ubuntu
+    group: ubuntu
+
+- name: Generate and save kubeadm join command to script
+  ansible.builtin.shell:
+    cmd: kubeadm token create --print-join-command > /tmp/join_command.sh
+
+- name: Save script to ansible control node
+  fetch:
+    src: /tmp/join_command.sh
+    dest: /tmp/
+    flat: true
+
+- name: Installing Calico for Pod networking
+  ansible.builtin.command:
+    cmd: kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.27.3/manifests/tigera-operator.yaml
+    
+- name: Wait for the calico deployment pods to be running
+  ansible.builtin.wait_for:
+    timeout: 60
+
+- name: Generate calico manifest from template
+  ansible.builtin.template:
+    src: calico.j2
+    dest: /tmp/calico.yaml
+  
+- name: Apply calico manifest
+  ansible.builtin.command:
+    cmd: kubectl apply -f /tmp/calico.yaml
