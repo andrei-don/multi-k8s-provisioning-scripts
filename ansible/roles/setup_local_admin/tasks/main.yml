@@ -1,0 +1,47 @@
+---
+# tasks file for setup-local-admin
+- name: Copy local private key and CSR to the controller node
+  copy:
+    src: "{{ item }}"
+    dest: /tmp
+  loop:
+    - /tmp/local-admin.key
+    - /tmp/local-admin.csr
+
+- name: Base64 Encode the CSR
+  shell:
+    cmd: cat /tmp/local-admin.csr | openssl enc -base64 -A
+  register: encoded_csr
+
+- name: Amend the CSR template
+  template:
+    src: csr.j2
+    dest: /tmp/csr.yaml
+
+- name: Apply CSR, approve the CSR and assign cluster-admin clusterrole to local-admin
+  shell:
+    cmd: |
+      kubectl apply -f /tmp/csr.yaml
+      kubectl certificate approve local-admin
+      kubectl create clusterrolebinding local-admin --clusterrole=cluster-admin --user=local-admin
+  ignore_errors: true
+
+- name: Get the encoded local-admin certificate
+  shell:
+    cmd: kubectl get csr local-admin -o=jsonpath={'.status.certificate'}
+  register: local_admin_crt 
+
+- name: Get the cluster CA certificate
+  shell:
+    cmd: kubectl config view --raw -o=jsonpath={'.clusters[*].cluster.certificate-authority-data'}
+  register: cluster_ca_crt 
+
+- name: Base64 encode the local-admin key
+  shell:
+    cmd: cat /tmp/local-admin.key | openssl enc -base64 -A
+  register: local_admin_key
+
+- name: Amend the kubeconfig template
+  template:
+    src: kubeconfig.j2
+    dest: /tmp/kubeconfig.yaml

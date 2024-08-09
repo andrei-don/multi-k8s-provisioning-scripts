@@ -23,3 +23,42 @@
   hosts: workers
   roles:
     - role: worker_node_setup
+
+- name: Setup Local Admin for cluster access
+  tags: localhost
+  hosts: localhost
+  become: false
+  tasks:
+    - name: Generating an OpenSSL Private Key
+      community.crypto.openssl_privatekey:
+        path: /tmp/local-admin.key
+        size: 2048
+        mode: 0644
+
+    - name: Generating an OpenSSL CSR
+      community.crypto.openssl_csr:
+        path: /tmp/local-admin.csr
+        privatekey_path: /tmp/local-admin.key
+        common_name: local-admin
+
+    - name: Creating local .kube folder
+      file:
+        state: directory
+        path: ~/.kube
+
+- name: Configure Local Admin inside the cluster
+  tags: cluster-localadmin
+  hosts: controller
+  roles:
+    - role: setup_local_admin
+
+- name: Copy the kubeconfig from k8s control node to localhost
+  tags: localhost
+  hosts: localhost
+  become: false
+  tasks:
+    - name: Copy kubeconfig to localhost
+      fetch:
+        src: /tmp/kubeconfig.yaml
+        dest: ~/.kube
+        flat: true
