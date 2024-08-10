@@ -1,4 +1,4 @@
 {{ ansible_managed }}
-{% for host in groups['all'] %}
+{% for host in groups['controllers'] + groups['workers'] %}
 {{ hostvars[host]['ansible_default_ipv4']['address'] }} {{ host }}
 {% endfor %}

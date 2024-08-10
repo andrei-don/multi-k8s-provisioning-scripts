@@ -1,6 +1,6 @@
 ---
 - name: Setup prerequisites
-  hosts: all
+  hosts: workers, controllers
   vars:
     auxiliary_packages:
       - apt-transport-https
@@ -53,12 +53,27 @@
     - role: setup_local_admin
 
 - name: Copy the kubeconfig from k8s control node to localhost
-  tags: localhost
-  hosts: localhost
+  tags: localhost-copy
+  hosts: controller
   become: false
   tasks:
     - name: Copy kubeconfig to localhost
       fetch:
-        src: /tmp/kubeconfig.yaml
+        src: /tmp/config
         dest: ~/.kube
         flat: true
+        validate_checksum: false
+
+- name: Local cleanup
+  hosts: localhost
+  tags: local-cleanup
+  tasks:
+    - name: Removing temp files
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /tmp/local-admin.csr
+        - /tmp/local-admin.key
+        - /tmp/join_command.sh
+      

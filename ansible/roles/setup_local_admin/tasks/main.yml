@@ -44,4 +44,4 @@
 - name: Amend the kubeconfig template
   template:
     src: kubeconfig.j2
-    dest: /tmp/kubeconfig.yaml
+    dest: /tmp/config
