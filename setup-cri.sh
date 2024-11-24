@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-#Install the containerd CRI version 1.7.12
-CONTAINERD_VERSION=1.7.18
-CRICTL_VERSION=1.30.0
+CONTAINERD_VERSION=2.0.0
+CRICTL_VERSION=1.31.1
 #Download and unzip the app
 curl -sLO https://github.com/containerd/containerd/releases/download/v${CONTAINERD_VERSION}/containerd-${CONTAINERD_VERSION}-linux-arm64.tar.gz
 sudo tar Cxzvf /usr/local containerd-${CONTAINERD_VERSION}-linux-arm64.tar.gz >/dev/null
